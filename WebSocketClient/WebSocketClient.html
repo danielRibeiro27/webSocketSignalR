@@ -73,6 +73,7 @@
 
             //cria o objeto web socket
             socket = new WebSocket(connectionUrl.value);
+            
             socket.onopen = function(event){
                 updateState();
 
@@ -100,6 +101,29 @@
             }
         }
 
+        closeButton.onclick = function(){
+            if(!socket || socket.readyState !== WebSocket.OPEN){
+                alert("Socket not connected");
+            }
+
+            socket.close(1000, "Closing from client");
+        }
+
+        sendButton.onclick = function(){
+            if(!socket || socket.readyState !== WebSocket.OPEN){
+                alert("Socket not connected");
+            }
+
+            var data = sendMessage.value;
+            socket.send(data);
+
+            commsLog.innerHTML += '<tr>' +
+                '<td>Server</td>' +
+                '<td>Client</td>' +
+                '<td>' + htmlEscape(data) + '</td>' + 
+                '</tr>'; 
+        }
+
         //desativa ou habilita os botões de acordo com o estado
         function updateState(){
             function disable(){
@@ -109,7 +133,7 @@
                 recipents.disabled = true;
             }
             function enable(){
-                sendMessagedisabled = false;
+                sendMessage.disabled = false;
                 sendButton.disabled = false;
                 closeButton.disabled = false;
                 recipents.disabled = false;
@@ -128,8 +152,8 @@
                         stateLabel.innerHTML = "Closed";
                         connID.innerHTML = "ConnID: N/a";
                         disable();
-                        connectionUrl.disable = false;
-                        connectButton.disable = false;
+                        connectionUrl.disabled = false;
+                        connectButton.disabled = false;
                         break;
 
                     case WebSocket.CLOSING:
@@ -144,6 +168,8 @@
 
                     default:
                         stateLabel.innerHTML = "Unknow WebSocket State: " + htmlEscape(socket.readyState);
+                        disable();
+                        break;
                 }
             }
         }
