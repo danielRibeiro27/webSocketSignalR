@@ -94,10 +94,12 @@
             socket.onerror = updateState();
             socket.onmessage = function (event){
                 commsLog.innerHTML += '<tr>' +
-                '<td>Server</td>' +
-                '<td>Client</td>' +
-                '<td>' + htmlEscape(event.data) + '</td>' + 
-                '</tr>'; 
+                    '<td>Server</td>' +
+                    '<td>Client</td>' +
+                    '<td>' + htmlEscape(event.data) + '</td>' + 
+                    '</tr>'; 
+
+                isConnID(event.data);
             }
         }
 
@@ -122,6 +124,12 @@
                 '<td>Client</td>' +
                 '<td>' + htmlEscape(data) + '</td>' + 
                 '</tr>'; 
+        }
+
+        function isConnID(str){
+            if(str.substring(0, 7) == "ConnID:"){
+                connID.innerHTML = str;
+            }
         }
 
         //desativa ou habilita os botões de acordo com o estado

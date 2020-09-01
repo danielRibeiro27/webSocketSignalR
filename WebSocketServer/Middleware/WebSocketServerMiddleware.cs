@@ -11,13 +11,17 @@ namespace WebSocketServer.Midddleware
     //dessa forma é possível utilizar algo como app.UseWebSockets(); na pipeline
     public class WebSocketServerMiddleware
     {
-        private readonly RequestDelegate _next;
+        private readonly RequestDelegate _next; //injeção de dependencia
+        private readonly WebSocketServerConnectionManager _manager;
 
-        public WebSocketServerMiddleware(RequestDelegate next){
+        public WebSocketServerMiddleware(RequestDelegate next, WebSocketServerConnectionManager manager)
+        {
             _next = next;
+            _manager = manager;
         }
 
-        public async Task InvokeAsync(HttpContext context){
+        public async Task InvokeAsync(HttpContext context)
+        {
             //verifica se a pipeline é um request de web socket
             //se foi feito o pedido de upgrade
             if(context.WebSockets.IsWebSocketRequest)
@@ -25,6 +29,9 @@ namespace WebSocketServer.Midddleware
                 //aceita o pedido de upgrade e cria um objeto web socket
                 WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 Console.WriteLine("WebSocket Connected");
+
+                string ConnID = _manager.AddSocket(webSocket); //adiciona o web socket na lista e retorna seu ID
+                await SendConnIDAsync(webSocket, ConnID);
 
                 //espera um resultado e um buffer 
                 await ReceiveMessage(webSocket, async (result, buffer) => {
@@ -48,6 +55,14 @@ namespace WebSocketServer.Midddleware
             }
         }
 
+        private async Task SendConnIDAsync (WebSocket socket, string connId)
+        {
+            //transforma uma string em bytes
+            var buffer = Encoding.UTF8.GetBytes("ConnID: " + connId);
+
+            //retorna o dado para o cliente
+            await socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None); 
+        }
         
         //método que espera uma mensagem e em seguida retorna
         private async Task ReceiveMessage(WebSocket socket, Action<WebSocketReceiveResult, byte[]> handleMessage)
